@@ -1,6 +1,3 @@
-use std::borrow::Cow;
-use std::fmt::format;
-
 use windows::core::PSTR;
 use windows::Win32::System::WindowsProgramming::GetUserNameA;
 
