@@ -5,3 +5,4 @@ Get the user name from the computer
 
 ## cursor
 Get the cursor's position every 50ms
+It's can write to a txt file
