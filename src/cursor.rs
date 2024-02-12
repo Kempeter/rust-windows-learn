@@ -4,7 +4,7 @@ use std::{thread, time};
 
 use windows::Win32::{Foundation::POINT, UI::WindowsAndMessaging::GetCursorPos};
 
-fn main() -> io::Result<()> {
+pub fn cursor() -> io::Result<()> {
     let mut cursor_pos: POINT = POINT { x: 0, y: 0 };
     let file_path = "cursor.txt";
     let mut file = OpenOptions::new()
