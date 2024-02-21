@@ -7,7 +7,7 @@ use fns::create_dir;
 use fns::get_disk_space;
 use fns::get_free_space;
 use fns::options;
-fn main() {
+fn file_manager() {
     let mut input = String::new();
 
     loop {
