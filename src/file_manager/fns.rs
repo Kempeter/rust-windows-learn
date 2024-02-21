@@ -5,7 +5,9 @@ use std::mem::MaybeUninit;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::GetLastError;
 use windows::Win32::Foundation::MAX_PATH;
+use windows::Win32::Foundation::NOERROR;
 use windows::Win32::Storage::FileSystem::{CreateDirectoryA, GetDiskFreeSpaceA};
+use windows::Win32::System::WindowsProgramming::FILE_DOES_NOT_EXIST;
 use windows::Win32::UI::Shell::PathFileExistsA;
 
 pub fn options() {
@@ -76,23 +78,25 @@ pub fn create_dir(path: &str, name: &str) {
         panic!("The name is too long! Max length: {}", MAX_PATH)
     }
     let full_path = CString::new(format!("{}{}", path, name)).expect("Failed to create CString");
-    let exists = unsafe { Some(PathFileExistsA(PCSTR(full_path.as_ptr() as *const u8))) };
+    let exists = unsafe { PathFileExistsA(PCSTR(full_path.as_ptr() as *const u8)) };
 
-    if let Some(_) = exists {
-        println!("Dictionary already exsits!");
-        return;
-    }
-
-    unsafe {
-        let result = CreateDirectoryA(PCSTR(full_path.as_ptr() as *const u8), None);
-
-        match result {
-            Ok(_) => {
-                println!("'{}' created successfully.", name);
-            }
-            Err(_) => {
-                println!("{:?}", GetLastError())
-            }
+    match exists {
+        Ok(_) => {
+            println!("Already exists!")
         }
-    };
+        Err(_) => {
+            unsafe {
+                let result = CreateDirectoryA(PCSTR(full_path.as_ptr() as *const u8), None);
+
+                match result {
+                    Ok(_) => {
+                        println!("'{}' created successfully.", name);
+                    }
+                    Err(_) => {
+                        println!("{:?}", GetLastError())
+                    }
+                }
+            };
+        }
+    }
 }
