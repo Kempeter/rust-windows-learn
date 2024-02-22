@@ -1,13 +1,11 @@
 use std::collections::HashMap;
-use std::ffi::CString;
 use std::mem::MaybeUninit;
 
+use windows::core::s;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::GetLastError;
 use windows::Win32::Foundation::MAX_PATH;
-use windows::Win32::Foundation::NOERROR;
 use windows::Win32::Storage::FileSystem::{CreateDirectoryA, GetDiskFreeSpaceA};
-use windows::Win32::System::WindowsProgramming::FILE_DOES_NOT_EXIST;
 use windows::Win32::UI::Shell::PathFileExistsA;
 
 pub fn options() {
@@ -18,7 +16,7 @@ pub fn options() {
 }
 
 fn get_disk_details() -> HashMap<&'static str, u32> {
-    let lprootpathname = CString::new("C:\\").expect("Failed to create CString");
+    let lprootpathname = s!("C:\\");
     let mut lpsectorspercluster = MaybeUninit::<u32>::uninit();
     let mut lpbytespersector = MaybeUninit::<u32>::uninit();
     let mut lpnumberoffreeclusters = MaybeUninit::<u32>::uninit();
@@ -26,7 +24,7 @@ fn get_disk_details() -> HashMap<&'static str, u32> {
 
     unsafe {
         GetDiskFreeSpaceA(
-            PCSTR(lprootpathname.as_ptr() as *const u8),
+            lprootpathname,
             Some(lpsectorspercluster.as_mut_ptr()),
             Some(lpbytespersector.as_mut_ptr()),
             Some(lpnumberoffreeclusters.as_mut_ptr()),
@@ -77,26 +75,28 @@ pub fn create_dir(path: &str, name: &str) {
     if name.len() as u32 > MAX_PATH {
         panic!("The name is too long! Max length: {}", MAX_PATH)
     }
-    let full_path = CString::new(format!("{}{}", path, name)).expect("Failed to create CString");
-    let exists = unsafe { PathFileExistsA(PCSTR(full_path.as_ptr() as *const u8)) };
+    let full_path_string = format!("{}{}", path, name);
+    let full_path = PCSTR::from_raw(full_path_string.as_ptr());
+    let exists = unsafe { PathFileExistsA(full_path) };
 
     match exists {
-        Ok(_) => {
-            println!("Already exists!")
+        Ok(()) => {
+            println!("Already exists!");
+            return;
         }
-        Err(_) => {
-            unsafe {
-                let result = CreateDirectoryA(PCSTR(full_path.as_ptr() as *const u8), None);
-
-                match result {
-                    Ok(_) => {
-                        println!("'{}' created successfully.", name);
-                    }
-                    Err(_) => {
-                        println!("{:?}", GetLastError())
-                    }
-                }
-            };
-        }
+        Err(_) => {}
     }
+
+    unsafe {
+        let result = CreateDirectoryA(full_path, None);
+
+        match result {
+            Ok(_) => {
+                println!("'{}' created successfully.", name);
+            }
+            Err(_) => {
+                println!("{:?}", GetLastError())
+            }
+        }
+    };
 }
